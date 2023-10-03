@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "vacancy"
+version = "0.1.0"
+description = ""
+authors = ["Almaz <almaz28-10@mail.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
