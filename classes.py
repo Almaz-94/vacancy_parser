@@ -21,7 +21,8 @@ class HeadHunterAPI(JobSiteAPI):
         params = {
             'text': f'NAME:{filter_word}',  # Текст фильтра. В имени должно быть слово "Аналитик"
             'per_page': 50,  # Кол-во вакансий на 1 странице
-            'only_with_salary': True
+            'only_with_salary': True,
+            'area': 113
         }
 
         req = requests.get('https://api.hh.ru/vacancies', params)  # Посылаем запрос к API
@@ -41,6 +42,7 @@ class SuperJobAPI(JobSiteAPI):
         params = {
             'keyword': filter_word,
             'no_agreement': 1,
+            'country_id': 1,
             'count': 50
         }
         req = requests.get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=params)
@@ -48,6 +50,8 @@ class SuperJobAPI(JobSiteAPI):
         req.close()
         return jsObj
 
+
+# print(SuperJobAPI().get_vacancies('python'))
 
 class Vacancy:
     def __init__(self, name: str, employer: str, url: str, area: str,
@@ -74,7 +78,7 @@ class Vacancy:
         #     mean_salary = (from_ + up_to) // 2
         # else:
         #     mean_salary = int(string_list[0].replace(' ', '_'))
-        if self.salary_from > 0 and self.salary_to > 0:
+        if self.salary_from and self.salary_to:
             mean_salary = (self.salary_from + self.salary_to) // 2
         else:
             mean_salary = max(self.salary_from, self.salary_to)
@@ -84,10 +88,18 @@ class Vacancy:
             return mean_salary
 
     def __str__(self):
-        return f'Вакансия на должность: {self.name} в компанию {self.employer} в г. {self.area}\n' \
-               f'Зарплата от {self.salary_from} до {self.salary_to} {self.currency}\n' \
-               f'Требования:\n{self.requirements}\nТип занятости: {self.employment_type}\n' \
-               f'Вакансия опубликована {self.published_at}\n{self.url}\n{"-"*80}'
+        response_0 = f'Вакансия на должность: {self.name} в компанию {self.employer} в г. {self.area}\n'
+
+        if self.salary_from and self.salary_to:
+            response_1 = f'Зарплата от {self.salary_from} до {self.salary_to} {self.currency}\n'
+        elif self.salary_from:
+            response_1 = f'Зарплата от {self.salary_from} {self.currency}\n'
+        else:
+            response_1 = f'Зарплата до {self.salary_to} {self.currency}\n'
+
+        response_2 = f'Требования\Описание:\n{self.requirements}\nТип занятости: {self.employment_type}\n' \
+                     f'Вакансия опубликована {self.published_at}\n{self.url}\n{"-" * 80}'
+        return response_0 + response_1 + response_2
 
     def __eq__(self, other):
         if isinstance(other, Vacancy):
