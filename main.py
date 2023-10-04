@@ -49,6 +49,7 @@ def user_interaction():
                               requirements, published, employment)
 
             json_saver.add_vacancy(vacancy=vacancy)
+    json_saver.save_to_json('Vacancies.json')
     if filter_words:
         filtered_vacancies = filter_vacancies(json_saver.vacancies, filter_words)
         for i in range(min(top_n, len(filtered_vacancies))):

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import json
 import os
-import datetime
+from datetime import datetime
 
 import requests
 
@@ -56,7 +56,7 @@ class SuperJobAPI(JobSiteAPI):
 class Vacancy:
     def __init__(self, name: str, employer: str, url: str, area: str,
                  salary_from: int, salary_to: int, currency: str,
-                 requirements: str, published_at: datetime, employment: str):
+                 requirements: str, published_at: str, employment: str):
         self.name = name
         self.employer = employer
         self.url = url
@@ -65,19 +65,19 @@ class Vacancy:
         self.salary_to = salary_to if salary_to else 0
         self.currency = currency
         self.requirements = requirements
-        self.published_at = published_at
+        self.date_string = published_at
         self.employment_type = employment
 
     @property
+    def published_at(self):
+        try:
+            date = datetime.strptime(self.date_string[:10], '%Y-%m-%d')
+            return f'{date.day}-{date.month}-{date.year}'
+        except TypeError:
+            date = datetime.fromtimestamp(int(self.date_string))
+            return f'{date.day}-{date.month}-{date.year}'
+    @property
     def approximate_salary(self):
-        # string_list = self.__salary[: -4].split('-')
-        # currency = self.__salary[-4:]
-        # if len(string_list) == 2:
-        #     from_ = int(string_list[0].replace(' ', '_'))
-        #     up_to = int(string_list[1].replace(' ', '_'))
-        #     mean_salary = (from_ + up_to) // 2
-        # else:
-        #     mean_salary = int(string_list[0].replace(' ', '_'))
         if self.salary_from and self.salary_to:
             mean_salary = (self.salary_from + self.salary_to) // 2
         else:
@@ -185,3 +185,8 @@ class JSONSaver(VacancySaver):
                 if element.approximate_salary() == salary_:
                     filtered_vacancies.append(element)
         return sorted(filtered_vacancies, key=lambda x: x.approximate_salary, reverse=True)
+
+    def save_to_json(self,file_name):
+        string=[(elem.__dict__) for elem in self.vacancies]
+        with open(file_name, 'w',encoding='utf-8') as file:
+            json.dump(string,file,ensure_ascii=False)

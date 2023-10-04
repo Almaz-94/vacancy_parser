@@ -30,13 +30,9 @@ def get_from_and_up_salary(salary):
 def filter_vacancies(vacancies, filter_words: list):
     filtered_vacancies = []
     for vacancy in vacancies:
-        # print(vacancy)
         for word in filter_words:
             for value in vacancy.__dict__.values():
                 if str(word).casefold() in str(value).casefold():
                     filtered_vacancies.append(vacancy)
-                    # print(filtered_vacancies)
                     break
-    # print(filtered_vacancies)
-    # print(len(filtered_vacancies))
     return sorted(filtered_vacancies, key=lambda x: x.approximate_salary, reverse=True)
