@@ -1,65 +1,50 @@
-from classes import Vacancy, HeadHunterAPI, SuperJobAPI, JSONSaver
-from utils import filter_vacancies
+from classes import JSONSaver
+from utils import filter_vacancies, print_top_vacancies, sort_vacancies
 
 
 def user_interaction():
-    platform = 'both'
-    search_query = 'python'
-    top_n = 10
-    filter_words = 'Django REST'.split()
-    # platform = input('Выберите сайт для поиска:\nHeadHunter\nSuperJob\nBoth\n')
-    # search_query = input("Введите поисковый запрос: ")
-    # top_n = int(input("Введите количество вакансий для вывода в топ N: "))
-    # filter_words = input("Введите ключевые слова для фильтрации вакансий: ").split()
+    platform = input('Выберите сайт для поиска:\nHeadHunter\nSuperJob\nBoth\n').lower()
+    if platform not in ['headhunter', 'superjob', 'both', 'hh', 'sj']:
+        raise ValueError('Некорректный запрос- ожидается один из предложенных вариантов, перезапустите скрипт')
+
+    search_query = input("Введите поисковый запрос:\n")
+    try:
+        top_n = int(input("Введите количество вакансий для вывода в топ N:\n"))
+    except ValueError:
+        raise ValueError('Некорректный запрос- ожидается число. Перезапустите скрипт')
+    filter_words = input("Введите ключевые слова для фильтрации вакансий:\n").split()
+
     json_saver = JSONSaver()
-    if platform.lower() in ['headhunter', 'both']:
-        vacancies_hh = HeadHunterAPI().get_vacancies(search_query)
-        for vacancy_hh in vacancies_hh['items']:
-            name = vacancy_hh['name']
-            employer = vacancy_hh['employer']['name']
-            url = vacancy_hh['alternate_url']
-            area = vacancy_hh['area']['name']
-            salary_from = vacancy_hh['salary']['from']
-            salary_to = vacancy_hh['salary']['to']
-            currency = vacancy_hh['salary']['currency']
-            requirements = vacancy_hh['snippet']['requirement']
-            published = vacancy_hh['published_at']
-            employment = vacancy_hh['employment']['name']
+    if platform in ['headhunter', 'hh', 'both']:
+        json_saver.add_hh_vacancies(search_query)
 
-            vacancy = Vacancy(name, employer, url, area, salary_from, salary_to, currency, requirements, published,
-                              employment)
+    if platform in ['superjob', 'sj', 'both']:
+        json_saver.add_sj_vacancies(search_query)
 
-            json_saver.add_vacancy(vacancy=vacancy)
-    if platform.lower() in ['superjob', 'both']:
-        vacancies_sj = SuperJobAPI().get_vacancies(search_query)
-        for vacancy_sj in vacancies_sj['objects']:
-            name = vacancy_sj['profession']
-            employer = vacancy_sj['client']['title']
-            url = vacancy_sj['link']
-            area = vacancy_sj['town']['title']
-            salary_from = vacancy_sj['payment_from']
-            salary_to = vacancy_sj['payment_to']
-            currency = vacancy_sj['currency']
-            requirements = vacancy_sj['candidat']
-            published = vacancy_sj['date_published']
-            employment = vacancy_sj['type_of_work']['title']
-
-            vacancy = Vacancy(name, employer, url, area,
-                              salary_from, salary_to, currency,
-                              requirements, published, employment)
-
-            json_saver.add_vacancy(vacancy=vacancy)
-    json_saver.save_to_json('Vacancies.json')
     if filter_words:
         filtered_vacancies = filter_vacancies(json_saver.vacancies, filter_words)
-        for i in range(min(top_n, len(filtered_vacancies))):
-            print(filtered_vacancies[i])
+        sorted_vacancies = sort_vacancies(filtered_vacancies)
+        print_top_vacancies(sorted_vacancies, top_n)
         if not filtered_vacancies:
             print("Нет вакансий, соответствующих заданным критериям.")
-        return
-    json_saver.vacancies.sort(key=lambda x: x.approximate_salary, reverse=True)
-    for i in range(top_n):
-        print(json_saver.vacancies[i])
+    else:
+        sorted_vacancies = sort_vacancies(json_saver.vacancies)
+        if not sorted_vacancies:
+            print("Нет вакансий, соответствующих заданным критериям.")
+        print_top_vacancies(sorted_vacancies, top_n)
+
+    filter_by_salary = input("Хотите поискать вакансии по зарплате? (Да\Нет\Yes\\No)\n").lower()
+    if filter_by_salary in ['да', 'yes']:
+        salary = input("Введите интервал желаемой зарплаты и валюту \n")  # 50 000- 100 000 руб./1000 USD
+        vac_by_salary = json_saver.get_vacancies_by_salary(salary)
+        sorted_vacancies = sort_vacancies(vac_by_salary)
+        if not sorted_vacancies:
+            print("Нет вакансий, соответствующих заданным критериям.")
+        print_top_vacancies(sorted_vacancies, top_n)
+
+    json_saver.save_to_json('Vacancies.json')
+    json_saver2 = JSONSaver()
+    json_saver2.get_from_json('Vacancies.json')
 
 
 if __name__ == '__main__':

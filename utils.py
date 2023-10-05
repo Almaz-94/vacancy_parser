@@ -11,28 +11,39 @@ def get_USD_conversion_rate():
 
 
 def get_from_and_up_salary(salary):
-    string_list = salary[: -4].split('-')
+    string_list = salary[: -4].split('-:')
     currency = salary[-4:]
     if len(string_list) == 2:
-        from_ = int(string_list[0].replace(' ', '_'))
-        up_to = int(string_list[1].replace(' ', '_'))
+        from_ = int(string_list[0].replace(' ', ''))
+        up_to = int(string_list[1].replace(' ', ''))
         if 'usd' in currency.lower():
             from_ *= get_USD_conversion_rate()
             up_to *= get_USD_conversion_rate()
         return from_, up_to
     else:
-        mean_salary = int(string_list[0].replace(' ', '_'))
+        mean_salary = int(string_list[0].replace(' ', ''))
         if 'usd' in currency.lower():
             mean_salary *= get_USD_conversion_rate()
-        return mean_salary
+        return [mean_salary]
 
 
 def filter_vacancies(vacancies, filter_words: list):
-    filtered_vacancies = []
+    filtered_vacancies = set()
     for vacancy in vacancies:
         for word in filter_words:
             for value in vacancy.__dict__.values():
                 if str(word).casefold() in str(value).casefold():
-                    filtered_vacancies.append(vacancy)
+                    filtered_vacancies.add(vacancy)
                     break
-    return sorted(filtered_vacancies, key=lambda x: x.approximate_salary, reverse=True)
+    #sorted_vacancies = sorted(list(filtered_vacancies), key=lambda x: x.approximate_salary, reverse=True)
+    return filtered_vacancies
+
+
+def print_top_vacancies(vacancies, top_n: int = 10):
+    index = min(top_n, len(vacancies))
+    for vacancy in vacancies[:index]:
+        print(vacancy)
+
+def sort_vacancies(vacancies):
+    return sorted(vacancies, key=lambda x: x.approximate_salary, reverse=True)
+
