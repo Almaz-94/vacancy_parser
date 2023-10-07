@@ -4,6 +4,7 @@
     Superjob https://api.superjob.ru
 
 Использованные библиотеки : datetime, bs4, requests, os, json
+
 Точка входа main.py
 
 Функциональность:
